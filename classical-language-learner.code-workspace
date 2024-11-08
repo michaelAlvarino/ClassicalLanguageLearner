@@ -1,0 +1,21 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      ".venv": true,
+    },
+    "search.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      ".venv": true,
+    },
+    "editor.tabSize": 4,
+    "editor.formatOnSave": true
+  },
+}
