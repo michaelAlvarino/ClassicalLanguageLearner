@@ -1,9 +1,13 @@
 ## Useful Commands
 
+### Start Ollama
 `ollama run llama3.2`
 
-`docker build . -t cll`
+### Build and run the service with docker copose
+`docker compose up`
 
+### Build and run the docker container directly
+`docker build . -t cll`
 `docker run -d --name cll -p 80:80 cll`
 
 ## Notes
