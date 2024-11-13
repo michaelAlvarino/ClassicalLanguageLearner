@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
+from db import flashcards
+
 from ..dependencies import get_token_header
 
 router = APIRouter(
@@ -30,9 +32,12 @@ async def read_item(flashcard_id: str):
     tags=["custom"],
     responses={403: {"description": "Operation forbidden"}},
 )
-async def update_flashcard(flashcard_id: str):
-    if flashcard_id != "plumbus":
+async def update_flashcard(name: str, subject: str, front: str, back: str):
+    if name != "plumbus":
         raise HTTPException(
             status_code=403, detail="You can only update the item: plumbus"
         )
-    return {"item_id": flashcard_id, "name": "The great Plumbus"}
+    fc = flashcards.Flashcard(
+        
+    )
+    return {"item_id": name, "name": "The great Plumbus"}

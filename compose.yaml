@@ -1,5 +1,46 @@
 services:
-  web:
-    build: .
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    depends_on:
+      pg:
+        condition: service_healthy
+      apply-schema:
+        condition: service_completed_successfully
     ports:
       - "80:80"
+  apply-schema:
+    build:
+      context: .
+      dockerfile: Dockerfile.schema
+    depends_on:
+      pg:
+        condition: service_healthy
+    networks:
+      - cll_net
+  pg:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 5s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    networks:
+      - cll_net
+
+volumes:
+  pgdata:
+
+
+networks:
+  cll_net:
+    driver: bridge
