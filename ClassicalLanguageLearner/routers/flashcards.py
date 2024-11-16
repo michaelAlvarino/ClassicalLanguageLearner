@@ -1,12 +1,12 @@
-from fastapi import APIRouter, HTTPException
-from sqlmodel import Session
-import openai
+import asyncio
+from typing import List
+from fastapi import APIRouter
 
-from ClassicalLanguageLearner.db import flashcards
-from ClassicalLanguageLearner.db.tools import get_session
-from ClassicalLanguageLearner.llm_interface import get_llm_client
+from ClassicalLanguageLearner.db.flashcards import Flashcard
 
 import logging
+
+from ClassicalLanguageLearner.stack_manager import get_stack_manager
 
 logger = logging.getLogger()
 
@@ -16,39 +16,21 @@ router = APIRouter(
 )
 
 
+MAX_COUNT = 25
+MAX_SUBJECT_LEN = 256
+
+STACK_MANAGER = get_stack_manager()
+
 @router.post("/create_stack/")
-async def create(name: str, subject: str, count: int):
-    assert count < 10, "Cannot create a stack with more than 10 flashcards"
-    assert len(subject) < 256, "Cannot create a stack with subject longer than 256 characters"
-    stack = flashcards.Stack(name=name, subject=subject)
-    client = get_llm_client()
-    new_flashcards = client.chat.completions.create(
-        model="llama3.2",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a helpful teacher that assists students studying for an exam by creating sets of flashcards."
-            },
-            {
-                "role": "user",
-                "content": f"Create a set of {count} flashcards on the following subject: {subject}"
-            }
-        ]
-    )
-    logger.info("Flashcards: %s", new_flashcards)
+async def create(language: str, subject: str, count: int) -> List[Flashcard]:
+    assert count <= MAX_COUNT, f"Cannot create a stack with more than {MAX_COUNT} flashcards"
+    assert len(subject) <= MAX_SUBJECT_LEN, f"Cannot create a stack with subject longer than {MAX_SUBJECT_LEN} characters"
 
-
-@router.put(
-    "/{flashcard_id}",
-    tags=["custom"],
-    responses={403: {"description": "Operation forbidden"}},
-)
-async def update_flashcard(name: str, subject: str, front: str, back: str):
-    if name != "plumbus":
-        raise HTTPException(
-            status_code=403, detail="You can only update the item: plumbus"
-        )
-    fc = flashcards.Flashcard(
-        
-    )
-    return {"item_id": name, "name": "The great Plumbus"}
+    logger.info("Checking db for results")
+    stack_db, cards_db = await STACK_MANAGER.get(subject=subject, language=language, count=count)
+    if stack_db:
+        logger.info("Results found in db")
+        return cards_db
+    logger.info("Querying LLM for results")
+    _, new_cards = await STACK_MANAGER.create(subject=subject, language=language, count=count)
+    return new_cards
