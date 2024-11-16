@@ -17,3 +17,8 @@ After running the docker container with the helplful command above, we can acces
 
 ### Postgres
 To install the psql client library: `brew install libpq`
+
+#### Connect
+1. Go to docker UI
+2. Find the `pg` container that is running
+2. `psql -U postgres` with password `example`

@@ -1,17 +1,23 @@
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.ext.declarative import declarative_base
+from typing import List, Optional
+from sqlmodel import Field, SQLModel
 
+class Stack(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
 
-Base = declarative_base()
-
-class Flashcard(Base):
-    __tablename__ = "flashcards"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    subject: Mapped[str] = mapped_column(String(128))
-    name: Mapped[str] = mapped_column(String(128))
-    front: Mapped[str] = mapped_column(String(1024))
-    back: Mapped[str] = mapped_column(String(1024))
+    name: str
+    subject: str
 
     def __repr__(self) -> str:
-        return f"Flashcard(subject={self.subject}, name={self.name}, front={self.front}, back={self.back})"
+        return f"Stack(name={self.name})"
+
+class Flashcard(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    stack_id: Optional[int] = Field(default=None, foreign_key="stack.id")
+
+    name: str
+    front: bytes
+    back: bytes
+
+    def __repr__(self) -> str:
+        return f"Flashcard(name={self.name}, front.len={len(self.front)}, back.len={len(self.back)})"

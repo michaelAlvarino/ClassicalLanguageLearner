@@ -10,7 +10,9 @@ COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 
-COPY ./ClassicalLanguageLearner /code/app
+COPY ./ClassicalLanguageLearner /code/ClassicalLanguageLearner
+
+COPY logging.conf /code/logging.conf
 
 
-CMD ["fastapi", "run", "app/main.py", "--port", "80"]
+CMD ["fastapi", "run", "ClassicalLanguageLearner/main.py", "--port", "80"]

@@ -1,30 +1,41 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
+from sqlmodel import Session
+import openai
 
-from db import flashcards
+from ClassicalLanguageLearner.db import flashcards
+from ClassicalLanguageLearner.db.tools import get_session
+from ClassicalLanguageLearner.llm_interface import get_llm_client
 
-from ..dependencies import get_token_header
+import logging
+
+logger = logging.getLogger()
 
 router = APIRouter(
     prefix="/flashcards",
     tags=["flashcards"],
-    dependencies=[Depends(get_token_header)],
-    responses={404: {"description": "Not found"}},
 )
 
 
-fake_items_db = {"plumbus": {"name": "Plumbus"}, "gun": {"name": "Portal Gun"}}
-
-
-@router.get("/")
-async def read_items():
-    return fake_items_db
-
-
-@router.get("/{flashcard_id}")
-async def read_item(flashcard_id: str):
-    if flashcard_id not in fake_items_db:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return {"name": fake_items_db[flashcard_id]["name"], "item_id": flashcard_id}
+@router.post("/create_stack/")
+async def create(name: str, subject: str, count: int):
+    assert count < 10, "Cannot create a stack with more than 10 flashcards"
+    assert len(subject) < 256, "Cannot create a stack with subject longer than 256 characters"
+    stack = flashcards.Stack(name=name, subject=subject)
+    client = get_llm_client()
+    new_flashcards = client.chat.completions.create(
+        model="llama3.2",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a helpful teacher that assists students studying for an exam by creating sets of flashcards."
+            },
+            {
+                "role": "user",
+                "content": f"Create a set of {count} flashcards on the following subject: {subject}"
+            }
+        ]
+    )
+    logger.info("Flashcards: %s", new_flashcards)
 
 
 @router.put(

@@ -6,23 +6,19 @@ services:
     depends_on:
       pg:
         condition: service_healthy
-      apply-schema:
-        condition: service_completed_successfully
+    environment:
+      OPENAI_BASE_URL: http://host.docker.internal:11434/v1/
+      OPENAI_API_KEY: ollama
     ports:
       - "80:80"
-  apply-schema:
-    build:
-      context: .
-      dockerfile: Dockerfile.schema
-    depends_on:
-      pg:
-        condition: service_healthy
+      - "11434:11434"
     networks:
       - cll_net
   pg:
     image: postgres
     restart: always
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -33,7 +29,7 @@ services:
       interval: 5s
       timeout: 60s
       retries: 5
-      start_period: 80s
+      start_period: 30s
     networks:
       - cll_net
 

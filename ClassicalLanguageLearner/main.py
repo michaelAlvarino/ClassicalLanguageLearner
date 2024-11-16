@@ -1,10 +1,24 @@
+# setup logging first
+import logging
+logging.config.fileConfig("logging.conf")
+
+from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
+from sqlmodel import Session
 
-from .dependencies import get_query_token, get_token_header
-from .internal import admin
-from .routers import items, users, flashcards
+from ClassicalLanguageLearner.db.flashcards import Flashcard
+from ClassicalLanguageLearner.db.tools import create_db_and_tables, get_engine
+from ClassicalLanguageLearner.dependencies import get_query_token, get_token_header
+from ClassicalLanguageLearner.internal import admin
+from ClassicalLanguageLearner.routers import items, users, flashcards
 
-app = FastAPI(dependencies=[Depends(get_query_token)])
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+
+app = FastAPI(dependencies=[Depends(get_query_token)], lifespan=lifespan)
 
 
 app.include_router(users.router)
@@ -21,4 +35,4 @@ app.include_router(
 
 @app.get("/")
 async def root():
-    return {"message": "Hello Bigger Applications!"}
+    return {"message": "Hola Mundo!"}
